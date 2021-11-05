@@ -188,7 +188,9 @@ function bindEscKey() {
    * if the escape key is pressed, use your router to navigate() to the 'home'
    * page. This will let us go back to the home page from the detailed page.
    */
-  
+  document.addEventListener('keydown', function(e){
+    router.navigate('home');
+  });
 }
 
 /**
@@ -210,4 +212,23 @@ function bindPopstate() {
    * so your navigate() function does not add your going back action to the history,
    * creating an infinite loop
    */
+  window.addEventListener('popstate', function(event) {
+    // The popstate event is fired each time when the current history entry changes.
+
+    var r = confirm("You pressed a Back button! Are you sure?!");
+
+    if (r == true) {
+        // Call Back button programmatically as per user confirmation.
+        history.back();
+        // Uncomment below line to redirect to the previous page instead.
+        // window.location = document.referrer // Note: IE11 is not supporting this.
+    } else {
+        // Stay on the current page.
+        history.pushState(null, null, window.location.pathname);
+    }
+
+    history.pushState(null, null, window.location.pathname);
+
+}, false);
+//source: https://stackoverflow.com/questions/25806608/how-to-detect-browser-back-button-event-cross-browser
 }
