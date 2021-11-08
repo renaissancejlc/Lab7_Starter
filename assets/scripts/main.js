@@ -1,6 +1,6 @@
 // main.js
 
-import { Router } from './router.js';
+import { Router } from './Router.js';
 
 const recipes = [
   'https://introweb.tech/assets/json/ghostCookies.json',
@@ -25,8 +25,8 @@ const router = new Router(function () {
    * This will only be two single lines
    * If you did this right, you should see the recipe cards just like last lab
    */
-  document.querySelector('section.section--recipe-cards').classList.remove('shown');
-  document.querySelector('section.section--recipe-expand').classList.add('shown');
+   document.querySelector('.section--recipe-expand').classList.add('shown');
+  document.querySelector('.section--recipe-cards').classList.remove('shown');
 });
 
 window.addEventListener('DOMContentLoaded', init);
@@ -57,6 +57,15 @@ function initializeServiceWorker() {
    *  TODO - Part 2 Step 1
    *  Initialize the service worker set up in sw.js
    */
+   if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js').then(function(registration) {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      }, function(err) {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+    });
+  }
 
 }
 
@@ -92,25 +101,29 @@ async function fetchRecipes() {
  */
 function createRecipeCards() {
   // Makes a new recipe card
+  for (let i = 0; i < recipes.length; i++){
   const recipeCard = document.createElement('recipe-card');
   // Inputs the data for the card. This is just the first recipe in the recipes array,
   // being used as the key for the recipeData object
-  recipeCard.data = recipeData[recipes[0]];
+  recipeCard.data = recipeData[recipes[i]];
 
   // This gets the page name of each of the arrays - which is basically
   // just the filename minus the .json. Since this is the first element
   // in our recipes array, the ghostCookies URL, we will receive the .json
   // for that ghostCookies URL since it's a key in the recipeData object, and
   // then we'll grab the 'page-name' from it - in this case it will be 'ghostCookies'
-  const page = recipeData[recipes[0]]['page-name'];
+  const page = recipeData[recipes[i]]['page-name'];
   router.addPage(page, function() {
     document.querySelector('.section--recipe-cards').classList.remove('shown');
     document.querySelector('.section--recipe-expand').classList.add('shown');
-    document.querySelector('recipe-expand').data = recipeData[recipes[0]];
+    document.querySelector('recipe-expand').data = recipeData[recipes[i]];
   });
   bindRecipeCard(recipeCard, page);
-
+  if (i>2){
+    recipeCard.classList.add('hidden');
+  }
   document.querySelector('.recipe-cards--wrapper').appendChild(recipeCard);
+}
 
   /**
    * TODO - Part 1 - Step 3
@@ -119,6 +132,8 @@ function createRecipeCards() {
    * understand what it is doing. Then, turn this into a for loop to iterate over 
    * all the recipes. (bonus - add the class 'hidden' to every recipe card with 
    * an index greater  than 2 in your for loop to make show more button functional)
+   * After this step you should see multiple cards rendered like the end of the last
+   * lab
    */
   for (let i =1; i < recipes.length(); i++){
     router.addPage(page, function() {
@@ -134,6 +149,11 @@ function createRecipeCards() {
     document.querySelector('.recipe-cards--wrapper').appendChild(recipeCard);
   }
 }
+
+/**
+ * Binds the click event listeners to the "Show more" button so that when it is
+ * clicked more recipes will be shown
+ */
 
 /**
  * Binds the click event listeners to the "Show more" button so that when it is
@@ -189,7 +209,9 @@ function bindEscKey() {
    * page. This will let us go back to the home page from the detailed page.
    */
   document.addEventListener('keydown', function(e){
-    router.navigate('home');
+    if (e.key==="Escape"){
+      router.navigate('home', false);
+    }
   });
 }
 
@@ -214,21 +236,11 @@ function bindPopstate() {
    */
   window.addEventListener('popstate', function(event) {
     // The popstate event is fired each time when the current history entry changes.
-
-    var r = confirm("You pressed a Back button! Are you sure?!");
-
-    if (r == true) {
-        // Call Back button programmatically as per user confirmation.
-        history.back();
-        // Uncomment below line to redirect to the previous page instead.
-        // window.location = document.referrer // Note: IE11 is not supporting this.
-    } else {
-        // Stay on the current page.
-        history.pushState(null, null, window.location.pathname);
+    if(!event.state){
+      router.navigate('home', true)
     }
-
-    history.pushState(null, null, window.location.pathname);
-
-}, false);
-//source: https://stackoverflow.com/questions/25806608/how-to-detect-browser-back-button-event-cross-browser
+    else{
+      router.navigate(event.state.page, true);
+        }
+  });
 }
